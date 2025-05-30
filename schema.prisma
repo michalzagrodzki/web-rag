@@ -1,0 +1,15 @@
+generator client {
+  provider = "prisma-client-py"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  filename   String
+  ingestedAt DateTime @default(now())
+  metadata   Json
+}

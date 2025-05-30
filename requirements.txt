@@ -2,8 +2,10 @@ fastapi
 uvicorn[standard]
 python-dotenv
 pydantic
+pydantic-settings
 langchain
 langchain-community
 supabase
 openai
 pypdf
+prisma>=0.15.0
