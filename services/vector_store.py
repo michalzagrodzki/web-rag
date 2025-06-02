@@ -1,4 +1,4 @@
-from supabase import create_client  # pip install supabase-py
+from supabase import create_client
 from langchain_community.vectorstores import SupabaseVectorStore
 from langchain_openai import OpenAIEmbeddings
 from config import settings

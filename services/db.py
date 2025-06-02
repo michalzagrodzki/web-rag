@@ -31,7 +31,7 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncSession: # type: ignore
     """
     Yield an AsyncSession. Use like:
 
