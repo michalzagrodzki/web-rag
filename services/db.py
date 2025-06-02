@@ -4,15 +4,19 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+from config import settings
 
-load_dotenv()  
+load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = settings.SQLALCHEMY_DATABASE_URI
+if not DATABASE_URL:
+    raise RuntimeError("`SQLALCHEMY_DATABASE_URI` is empty")
 
 engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
     echo=False,
     future=True,
+    connect_args={"ssl": True},
 )
 
 async_session_maker = sessionmaker(
