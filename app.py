@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter
 from fastapi.concurrency import asynccontextmanager
 from config import settings
 from services.db import init_db
@@ -10,18 +10,20 @@ from schemas import UploadResponse, QueryRequest, QueryResponse
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Application startup: initialize database
-    await init_db()
+    #await init_db()
     yield
     # Application shutdown: (no actions needed currently)
-
 
 app = FastAPI(
     title="RAG Supabase FastAPI (SQLModel)",
     version="1.0.0",
     description="RAG service using Supabase vector store, OpenAI API, and SQLModel/Postgres",
+    lifespan=lifespan
 )
 
-@app.post(
+router_v1 = APIRouter(prefix="/v1")
+
+@router_v1.post(
     "/upload",
     response_model=UploadResponse,
     tags=["Ingestion"],
@@ -40,6 +42,8 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     count = await ingest_pdf(path)
     return UploadResponse(message="PDF ingested successfully", inserted_count=count)
+
+app.include_router(router_v1)
 
 if __name__ == "__main__":
     import uvicorn
