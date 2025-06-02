@@ -11,3 +11,5 @@ sqlmodel==0.0.24
 alembic==1.16.1
 asyncpg==0.30.0
 python-multipart==0.0.20
+greenlet
+psycopg2
