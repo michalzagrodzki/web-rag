@@ -8,4 +8,9 @@ langchain-community
 supabase
 openai
 pypdf
-prisma>=0.15.0
+sqlmodel
+asyncpg
+alembic
+langchain_openai
+supabase
+python-multipart

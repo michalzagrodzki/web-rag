@@ -1,28 +1,23 @@
-from supabase import create_client
+from supabase import create_client  # pip install supabase-py
 from langchain_community.vectorstores import SupabaseVectorStore
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from config import settings
-from services.db import connect_db, disconnect_db
-import asyncio
 
-# Connect to Postgres via Prisma on startup
-def init_services():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(connect_db())
+# 1) Build a Supabase client from your URL and Key
+supabase_client = create_client(
+    settings.supabase_url,   # e.g. "https://abcd1234.supabase.co"
+    settings.supabase_key    # service_role or anon key
+)
 
-# Initialize Supabase client & vector store
-supabase = create_client(settings.supabase_url, settings.supabase_key)
+# 2) Initialize OpenAI embeddings
 embeddings = OpenAIEmbeddings(
     model=settings.embedding_model,
-    openai_api_key=settings.openai_api_key
+    openai_api_key=settings.openai_api_key,
 )
 
+# 3) Now pass the client into SupabaseVectorStore
 vector_store = SupabaseVectorStore(
-    client=supabase,
+    client=supabase_client,
     embedding=embeddings,
-    table_name=settings.supabase_table,
-    query_name="match_documents"
+    table_name=settings.supabase_table,  # e.g. "documents"
 )
-
-# Call init
-init_services()

@@ -1,4 +1,3 @@
-import os
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
@@ -18,6 +17,8 @@ class Settings(BaseSettings):
 
     # RAG params
     top_k: int = Field(5, env="TOP_K")
+
+    pdf_dir: str = Field("pdfs/", env="PDF_DIR")
 
     class Config:
         env_file = ".env"
