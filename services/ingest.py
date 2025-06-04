@@ -2,7 +2,7 @@ import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from services.vector_store import vector_store
-from services.models import Document
+from services.models import PdfIngestion
 from services.db import get_session
 from sqlmodel import select
 
@@ -27,7 +27,7 @@ async def ingest_pdf(file_path: str) -> int:
 
     # Use the async session to create a Document row
     async for session in get_session():
-        doc = Document(filename=filename, metadata=metadata)
+        doc = PdfIngestion(filename=filename, metadata=metadata)
         session.add(doc)
         await session.commit()
 

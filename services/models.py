@@ -4,12 +4,13 @@ from uuid import uuid4
 
 from sqlmodel import SQLModel, Field, Column, JSON
 
-class Document(SQLModel, table=True):
+class PdfIngestion(SQLModel, table=True):
     """
     Represents a stored PDF ingestion record.
     """
     # 1) Let SQLModel create the PK column.
     #    The default_factory ensures we get a uuid4() string at runtime.
+    __tablename__ = "pdf_ingestion"
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
 
     filename: str

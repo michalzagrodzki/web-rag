@@ -10,7 +10,7 @@ from schemas import UploadResponse, QueryRequest, QueryResponse
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Application startup: initialize database
-    #await init_db()
+    await init_db()
     yield
     # Application shutdown: (no actions needed currently)
 

@@ -13,9 +13,6 @@ class Settings(BaseSettings):
     openai_model: str = Field("gpt-3.5-turbo", env="OPENAI_MODEL")
     embedding_model: str = Field("text-embedding-ada-002", env="EMBEDDING_MODEL")
 
-    # Prisma/Postgres
-    database_url: str = Field(..., env="DATABASE_URL")
-
     # RAG params
     top_k: int = Field(5, env="TOP_K")
 
