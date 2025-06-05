@@ -13,3 +13,4 @@ asyncpg==0.30.0
 python-multipart==0.0.20
 greenlet
 psycopg2
+jiter>=0.2.0

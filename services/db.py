@@ -2,7 +2,7 @@ from multiprocessing import pool
 import os
 import ssl
 import uuid
-from jiter import from_json
+from jiter import from_json, to_json_str
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
