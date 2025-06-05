@@ -1,15 +1,17 @@
 import os
 from typing import Any
-from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter
+from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Depends
 from fastapi.concurrency import asynccontextmanager
-from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from services.db import get_session, init_db
 from services.ingest import ingest_pdf
-from services.vector_store import supabase_client
 from schemas import UploadResponse, QueryRequest, QueryResponse
-from services.documents import list_documents 
-from config import settings
+from typing import Any, List, Dict
+from services.db import init_db, get_session
+from services.models import Document
+from sqlmodel import select
+from fastapi.responses import JSONResponse
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,27 +61,33 @@ async def upload_pdf(file: UploadFile = File(...)):
     "/documents",
     summary="List all documents from Supabase",
     description="Fetches every row from the Supabase “documents” table and returns them as JSON",
+    response_model=List[Dict[str, Any]],
 )
-async def get_all_documents() -> Any:
+async def get_all_documents(
+    session: AsyncSession = Depends(get_session),
+) -> Any:
     """
-    Consume the async generator `list_documents()` and return
-    a list of dicts (one per Document).
+    Open a single AsyncSession, select all Document rows, and return them.
     """
     try:
-        # Build a JSON list by “async for … in” the generator
-        documents_list = [
-            {
+        stmt = select(Document)
+        result = await session.execute(stmt)
+        docs = result.scalars().all()
+
+        documents_list = []
+        for doc in docs:
+            documents_list.append({
                 "id": str(doc.id),
                 "content": doc.content,
-                "embedding": doc.embedding,    # a List[float] or None
-                "metadata": doc.meta,     # a Dict[str,Any]
-            }
-            async for doc in list_documents()
-        ]
-        return JSONResponse(documents_list)
+                "embedding": doc.embedding,  # List[float] or None
+                "metadata": doc.meta,        # Dict[str, Any]
+            })
+
+        return JSONResponse(content=documents_list)
+
     except Exception as e:
-        # If something goes wrong in the DB layer, return a 500
-        raise HTTPException(status_code=500, detail=str(e))
+        # Log or inspect `e` as needed, then raise a 500
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
 app.include_router(router_v1)
 

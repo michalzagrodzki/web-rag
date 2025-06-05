@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 from config import settings
+from fastapi.concurrency import asynccontextmanager
 
 load_dotenv()
 
@@ -60,11 +61,8 @@ async def init_db() -> None:
     #    await conn.run_sync(SQLModel.metadata.create_all)
 
 async def get_session() -> AsyncSession: # type: ignore
-    """
-    Yield an AsyncSession. Use like:
-
-        async for session in get_session():
-            ...
-    """
-    async with async_session_maker() as session:
+    session: AsyncSession = async_session_maker()
+    try:
         yield session
+    finally:
+        await session.close()

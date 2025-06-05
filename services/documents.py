@@ -1,8 +1,10 @@
 from typing import AsyncGenerator
-from fastapi import logger
 from sqlmodel import select
 from services.models import Document
 from services.db import get_session
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def list_documents() -> AsyncGenerator[Document, None]:
     """
