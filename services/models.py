@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Optional, Any, Dict
-from uuid import uuid4
+from typing import Any, Dict, List, Optional
+from uuid import UUID as PyUUID, uuid4
+from sqlmodel import SQLModel, Field
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, ARRAY
+from sqlalchemy import JSON, Column, Float
 
-from sqlmodel import SQLModel, Field, Column, JSON
 
 class PdfIngestion(SQLModel, table=True):
     """
@@ -22,4 +24,27 @@ class PdfIngestion(SQLModel, table=True):
     meta: Dict[str, Any] = Field(
         default_factory=dict,
         sa_column=Column("metadata", JSON, nullable=False),
+    )
+
+class Document(SQLModel, table=True):
+    """
+    This SQLModel maps to the `public.documents` table that holds the chunked text
+    and embeddings. Adjust column types/names as needed to match your actual table.
+    """
+    __tablename__ = "documents"  # ← must match your actual table name
+
+    id: PyUUID = Field(
+        default_factory=uuid4,
+        sa_column=Column(PGUUID(as_uuid=True), primary_key=True, nullable=False),
+    )
+    content: str = Field(sa_column=Column("content", nullable=False))
+    # If your embedding column is PGVECTOR, SQLModel won’t know it natively,
+    # so you can read it as an ARRAY of floats (or JSONB) if that’s how it’s stored.
+    embedding: Optional[List[float]] = Field(
+        default=None,
+        sa_column=Column("embedding", ARRAY(Float), nullable=True)
+    )
+    meta: Dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column("metadata", JSONB, nullable=False),
     )

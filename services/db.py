@@ -1,9 +1,7 @@
-from multiprocessing import pool
-import os
+from sqlalchemy.pool import NullPool
 import ssl
 import uuid
-from jiter import from_json, to_json_str
-from sqlmodel import SQLModel
+import orjson
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -19,17 +17,26 @@ ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 
+# Wrap orjson.dumps so that it returns a str (decode bytes → str)
+def orjson_serializer(obj: object) -> str:
+    # orjson.dumps(obj) returns bytes; decode to utf-8 string
+    return orjson.dumps(obj).decode("utf-8")
+
+# We can use orjson.loads directly, since it accepts bytes or str and returns Python objects
+def orjson_deserializer(s: str | bytes) -> object:
+    return orjson.loads(s)
+
 engine: AsyncEngine = create_async_engine(
-    DATABASE_URL,
+    settings.POSTGRES_URL,
+    json_serializer=orjson_serializer,
+    json_deserializer=orjson_deserializer,
     echo=True,
+    pool_recycle=180,
     future=True,
-    json_deserializer=from_json,
-    json_serializer=to_json_str,
-    poolclass=pool.NullPool,
-    pool_size=16,
-    max_overflow=128,
+    pool_pre_ping=True,
+    poolclass=NullPool,
     connect_args={
-        "ssl": ssl_context, 
+        "ssl": ssl_context,
         "prepared_statement_name_func": lambda:  f"__asyncpg_{uuid.uuid4()}__",
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,
@@ -49,8 +56,8 @@ async def init_db() -> None:
     """
     from services.models import PdfIngestion  # import so SQLModel.metadata knows about it
 
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+    #async with engine.begin() as conn:
+    #    await conn.run_sync(SQLModel.metadata.create_all)
 
 async def get_session() -> AsyncSession: # type: ignore
     """

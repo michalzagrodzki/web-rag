@@ -6,7 +6,8 @@ class Settings(BaseSettings):
     # Supabase
     supabase_url: str = Field(..., env="SUPABASE_URL")
     supabase_key: str = Field(..., env="SUPABASE_KEY")
-    supabase_table: str = Field("documents", env="SUPABASE_TABLE")
+    supabase_table: str = Field("pdf_ingestion", env="SUPABASE_TABLE")
+    supabase_documents: str = "documents"
 
     # OpenAI
     openai_api_key: str = Field(..., env="OPENAI_API_KEY")
@@ -20,10 +21,12 @@ class Settings(BaseSettings):
 
     ## PostgreSQL (metadata) credentials, read from .env
     POSTGRES_SERVER: str  = Field(..., env="POSTGRES_SERVER")
-    POSTGRES_PORT: int    = Field(5432, env="POSTGRES_PORT")
+    POSTGRES_PORT: int    = Field(6543, env="POSTGRES_PORT")
     POSTGRES_USER: str    = Field(..., env="POSTGRES_USER")
     POSTGRES_PASSWORD: str = Field("", env="POSTGRES_PASSWORD")
     POSTGRES_DB: str      = Field("", env="POSTGRES_DB")
+
+    POSTGRES_URL: str = Field("", env="POSTGRES_URL")
 
     @computed_field
     @property
