@@ -4,14 +4,12 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Depends
 from fastapi.concurrency import asynccontextmanager
 from sqlalchemy import text
 from services.db import get_session, init_db
+from services.documents import list_documents
 from services.ingest import ingest_pdf
 from schemas import UploadResponse, QueryRequest, QueryResponse
 from typing import Any, List, Dict
 from services.db import init_db, get_session
-from services.models import Document
-from sqlmodel import select
 from fastapi.responses import JSONResponse
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -63,30 +61,15 @@ async def upload_pdf(file: UploadFile = File(...)):
     description="Fetches every row from the Supabase “documents” table and returns them as JSON",
     response_model=List[Dict[str, Any]],
 )
-async def get_all_documents(
-    session: AsyncSession = Depends(get_session),
-) -> Any:
+async def get_all_documents() -> Any:
     """
     Open a single AsyncSession, select all Document rows, and return them.
     """
     try:
-        stmt = select(Document)
-        result = await session.execute(stmt)
-        docs: List[Document] = result.scalars().all()
-        await session.commit()
-        documents_list = []
-        for doc in docs:
-            documents_list.append({
-                "id": str(doc.id),
-                "content": doc.content,
-                "embedding": doc.embedding,
-                "metadata": doc.meta,
-            })
-
-        return JSONResponse(content=documents_list)
+        docs = await list_documents()
+        return JSONResponse(content=docs)
 
     except Exception as e:
-        # Log or inspect `e` as needed, then raise a 500
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
 app.include_router(router_v1)

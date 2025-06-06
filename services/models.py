@@ -6,7 +6,6 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, ARRAY
 from sqlalchemy import JSON, Column, Float
 from pgvector.sqlalchemy import Vector
 
-
 class PdfIngestion(SQLModel, table=True):
     """
     Represents a stored PDF ingestion record.
