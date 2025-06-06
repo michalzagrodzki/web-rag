@@ -33,7 +33,7 @@ router_v1 = APIRouter(prefix="/v1")
 async def test_db():
     try:
         async for session in get_session():
-            result = await session.execute(text("SELECT 1"))
+            result = await session.exec(text("SELECT 1"))
             return {"status": "ok", "result": result.scalar()}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
@@ -72,15 +72,15 @@ async def get_all_documents(
     try:
         stmt = select(Document)
         result = await session.execute(stmt)
-        docs = result.scalars().all()
-
+        docs: List[Document] = result.scalars().all()
+        await session.commit()
         documents_list = []
         for doc in docs:
             documents_list.append({
                 "id": str(doc.id),
                 "content": doc.content,
-                "embedding": doc.embedding,  # List[float] or None
-                "metadata": doc.meta,        # Dict[str, Any]
+                "embedding": doc.embedding,
+                "metadata": doc.meta,
             })
 
         return JSONResponse(content=documents_list)
