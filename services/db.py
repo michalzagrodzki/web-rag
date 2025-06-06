@@ -11,9 +11,6 @@ from fastapi.concurrency import asynccontextmanager
 
 load_dotenv()
 
-DATABASE_URL = settings.SQLALCHEMY_DATABASE_URI
-if not DATABASE_URL:
-    raise RuntimeError("`SQLALCHEMY_DATABASE_URI` is empty")
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE

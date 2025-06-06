@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, computed_field, PostgresDsn
+from pydantic import Field
 from sqlalchemy.engine import URL
 
 class Settings(BaseSettings):
@@ -25,26 +25,8 @@ class Settings(BaseSettings):
     POSTGRES_USER: str    = Field(..., env="POSTGRES_USER")
     POSTGRES_PASSWORD: str = Field("", env="POSTGRES_PASSWORD")
     POSTGRES_DB: str      = Field("", env="POSTGRES_DB")
-
     POSTGRES_URL: str = Field("", env="POSTGRES_URL")
 
-    @computed_field
-    @property
-    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        """
-        Build a proper `postgresql+psycopg://...` or `postgresql+asyncpg://...`
-        connection string with correct quoting. If you later switch to async,
-        change `scheme="postgresql+asyncpg"` here.
-        """
-        url = URL.create(
-            drivername="postgresql+asyncpg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_SERVER,
-            port=self.POSTGRES_PORT,
-            database=self.POSTGRES_DB,
-        )
-        return str(url)
     class Config:
         env_file = ".env"
 

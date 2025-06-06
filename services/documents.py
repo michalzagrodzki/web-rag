@@ -1,9 +1,7 @@
 from typing import Any, Dict, List
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 from services.models import Document
 from services.db import get_session
-import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)

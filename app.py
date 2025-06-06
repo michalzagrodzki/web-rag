@@ -86,6 +86,7 @@ async def get_all_documents(skip: int = Query(0, ge=0), limit: int = Query(10, g
     try:
         logger.info(f"Fetching documents: skip={skip}, limit={limit}")
         docs = await list_documents(skip=skip, limit=limit)
+        logger.info(f"Received docs from list_documents")
         return JSONResponse(content=docs)
 
     except Exception as e:

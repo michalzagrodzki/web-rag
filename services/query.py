@@ -1,8 +1,5 @@
-import os
 from typing import List, Tuple, Dict, Any
 from fastapi import HTTPException
-import numpy as np
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from services.db import get_session
 from langchain_openai import OpenAIEmbeddings

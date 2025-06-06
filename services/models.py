@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID as PyUUID, uuid4
 from sqlmodel import SQLModel, Field
-from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, ARRAY
-from sqlalchemy import JSON, Column, Float
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
+from sqlalchemy import JSON, Column
 from pgvector.sqlalchemy import Vector
 
 class PdfIngestion(SQLModel, table=True):
