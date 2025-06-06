@@ -31,7 +31,7 @@ engine: AsyncEngine = create_async_engine(
     settings.POSTGRES_URL,
     json_serializer=orjson_serializer,
     json_deserializer=orjson_deserializer,
-    echo=True,
+    echo=False,
     pool_recycle=1800,
     future=True,
     pool_pre_ping=True,

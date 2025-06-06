@@ -1,5 +1,6 @@
 import os
 from typing import List, Tuple, Dict, Any
+from fastapi import HTTPException
 import numpy as np
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -8,6 +9,8 @@ from langchain_openai import OpenAIEmbeddings
 import openai
 from config import settings
 import logging
+import asyncio
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +34,21 @@ async def answer_question(question: str) -> Tuple[str, List[Dict[str, Any]]]:
         FROM documents
         ORDER BY embedding <=> :q
         LIMIT 5
-    """).execution_options(autocommit=True)
+    """)
 
     q_vector_str = to_pgvector_literal(q_vector)
 
     logger.info("✅ Starting to fetch documents from DB")
     async with get_session() as session:
-        result = await session.execute(sql, {"q": q_vector_str})
-        rows = result.fetchall()
+        try:
+            result = await asyncio.wait_for(
+                session.execute(sql, {"q": q_vector_str}),
+                timeout=10.0
+            )
+            rows = result.fetchall()
+        except asyncio.TimeoutError:
+            logger.error("Database query timed out — connection may be stale.")
+            raise HTTPException(status_code=504, detail="Database query timed out.")
 
     logger.info("✅ Fetched documents from DB")
 
@@ -61,7 +71,6 @@ async def answer_question(question: str) -> Tuple[str, List[Dict[str, Any]]]:
 
     # Step 4: Generate answer via OpenAI ChatCompletion (sync call in async context)
     # Wrap blocking call with asyncio to avoid hanging the event loop
-    import asyncio
     from openai import OpenAI
     client = OpenAI(api_key=settings.openai_api_key)
     logger.info("✅ Prompt ready, calling OpenAI")
