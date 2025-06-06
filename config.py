@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Supabase
     supabase_url: str = Field(..., env="SUPABASE_URL")
     supabase_key: str = Field(..., env="SUPABASE_KEY")
-    supabase_table: str = Field("pdf_ingestion", env="SUPABASE_TABLE")
+    supabase_table: str = Field("documents", env="SUPABASE_TABLE")
     supabase_documents: str = "documents"
 
     # OpenAI

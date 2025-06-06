@@ -13,7 +13,10 @@ class PdfIngestion(SQLModel, table=True):
     # 1) Let SQLModel create the PK column.
     #    The default_factory ensures we get a uuid4() string at runtime.
     __tablename__ = "pdf_ingestion"
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    id: PyUUID = Field(
+        default_factory=uuid4, 
+        sa_column=Column(PGUUID(as_uuid=True), primary_key=True, nullable=False)
+    )
 
     filename: str
 
