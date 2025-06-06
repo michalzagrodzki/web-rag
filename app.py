@@ -40,8 +40,8 @@ router_v1 = APIRouter(prefix="/v1")
 @router_v1.get("/test-db")
 async def test_db():
     try:
-        async for session in get_session():
-            result = await session.exec(text("SELECT 1"))
+        async with get_session() as session:
+            result = await session.execute(text("SELECT 1"))
             return {"status": "ok", "result": result.scalar()}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
