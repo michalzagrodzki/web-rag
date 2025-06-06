@@ -10,6 +10,15 @@ from schemas import UploadResponse, QueryRequest, QueryResponse
 from typing import Any, List, Dict
 from services.db import init_db, get_session
 from fastapi.responses import JSONResponse
+import logging
+from fastapi import Query
+
+logging.basicConfig(
+    level=logging.DEBUG,  # or DEBUG
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +44,7 @@ async def test_db():
             return {"status": "ok", "result": result.scalar()}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
 @router_v1.post(
     "/upload",
     response_model=UploadResponse,
@@ -49,24 +59,32 @@ async def upload_pdf(file: UploadFile = File(...)):
     contents = await file.read()
     os.makedirs("pdfs", exist_ok=True)
     path = os.path.join("pdfs", file.filename)
+    
     with open(path, "wb") as f:
         f.write(contents)
 
     count = await ingest_pdf(path)
-    return UploadResponse(message="PDF ingested successfully", inserted_count=count)
+
+    logger.info(f"Finished ingestion, inserted {count} chunks.")
+
+    return UploadResponse(
+        message="PDF ingested successfully",
+        inserted_count=count
+    )
 
 @router_v1.get(
     "/documents",
-    summary="List all documents from Supabase",
-    description="Fetches every row from the Supabase “documents” table and returns them as JSON",
+    summary="List documents with pagination",
+    description="Fetches paginated rows from the Supabase 'documents' table.",
     response_model=List[Dict[str, Any]],
 )
-async def get_all_documents() -> Any:
+async def get_all_documents(skip: int = Query(0, ge=0), limit: int = Query(10, ge=1, le=100)) -> Any:
     """
     Open a single AsyncSession, select all Document rows, and return them.
     """
     try:
-        docs = await list_documents()
+        logger.info(f"Fetching documents: skip={skip}, limit={limit}")
+        docs = await list_documents(skip=skip, limit=limit)
         return JSONResponse(content=docs)
 
     except Exception as e:
