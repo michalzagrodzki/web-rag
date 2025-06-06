@@ -9,8 +9,10 @@ class QueryRequest(BaseModel):
     question: str
 
 class SourceDoc(BaseModel):
-    page_content: str
+    page_content: str | None = None  # optional if not used
     metadata: Dict[str, Any]
+    similarity: float | None = None
+    id: str
 
 class QueryResponse(BaseModel):
     answer: str

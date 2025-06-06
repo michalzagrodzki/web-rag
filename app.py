@@ -12,6 +12,7 @@ from services.db import init_db, get_session
 from fastapi.responses import JSONResponse
 import logging
 from fastapi import Query
+from services.query import answer_question
 
 logging.basicConfig(
     level=logging.DEBUG,  # or DEBUG
@@ -89,6 +90,17 @@ async def get_all_documents(skip: int = Query(0, ge=0), limit: int = Query(10, g
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+@router_v1.post(
+    "/query",
+    response_model=QueryResponse,
+    tags=["RAG"],
+    summary="Query the knowledge base",
+    description="Retrieval-Augmented Generation over ingested documents."
+)
+async def query_qa(req: QueryRequest):
+    answer, sources = await answer_question(req.question)
+    return QueryResponse(answer=answer, source_docs=sources)
 
 app.include_router(router_v1)
 
