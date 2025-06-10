@@ -1,18 +1,20 @@
 import os
 from typing import Any
+import uuid
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Depends
 from fastapi.concurrency import asynccontextmanager
 from sqlalchemy import text
 from services.db import get_session, init_db
 from services.documents import list_documents
+from services.history import append_history, get_history
 from services.ingest import ingest_pdf
 from schemas import UploadResponse, QueryRequest, QueryResponse
 from typing import Any, List, Dict
 from services.db import init_db, get_session
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import logging
 from fastapi import Query
-from services.query import answer_question
+from services.query import answer_question, stream_answer
 
 logging.basicConfig(
     level=logging.DEBUG,  # or DEBUG
@@ -102,6 +104,49 @@ async def get_all_documents(skip: int = Query(0, ge=0), limit: int = Query(10, g
 async def query_qa(req: QueryRequest):
     answer, sources = await answer_question(req.question)
     return QueryResponse(answer=answer, source_docs=sources)
+
+@router_v1.post(
+    "/query-stream",
+    response_model=None,
+    tags=["RAG"],
+    summary="Streamed Q&A with history"
+)
+async def query_stream(req: QueryRequest):
+    if req.conversation_id is None:
+        conversation_id = str(uuid.uuid4())
+    else:
+        # Validate UUID format to prevent SQL errors
+        try:
+            uuid.UUID(req.conversation_id)
+            conversation_id = req.conversation_id
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid conversation_id format (must be UUID)")
+
+    history = await get_history(req.conversation_id)
+
+    # 2) stream tokens from OpenAI
+    async def event_generator():
+        full_answer = ""
+        async for token in stream_answer(req.question, history):
+            full_answer += token
+            yield token
+        await append_history(req.conversation_id, req.question, full_answer)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/plain; charset=utf-8"
+    )
+
+@router_v1.get(
+    "/history/{conversation_id}",
+    response_model=List[Dict[str, str]],
+    tags=["History"],
+    summary="Get chat history for a conversation",
+    description="Returns an array of { question, answer } for the given conversation_id"
+)
+async def read_history(conversation_id: str):
+    history = await get_history(conversation_id)
+    return JSONResponse(content=history)
 
 app.include_router(router_v1)
 

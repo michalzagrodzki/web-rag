@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Any, List, Dict
+from pydantic import BaseModel, Field
+from typing import Any, List, Dict, Optional
 
 class UploadResponse(BaseModel):
     message: str
@@ -7,6 +7,8 @@ class UploadResponse(BaseModel):
 
 class QueryRequest(BaseModel):
     question: str
+    conversation_id: Optional[str] = Field(None, description="Conversation UUID")
+
 
 class SourceDoc(BaseModel):
     page_content: str | None = None  # optional if not used
