@@ -3,6 +3,7 @@ from typing import Any
 import uuid
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Depends
 from fastapi.concurrency import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware   
 from sqlalchemy import text
 from services.db import get_session, init_db
 from services.documents import list_documents
@@ -35,6 +36,29 @@ app = FastAPI(
     version="1.0.0",
     description="RAG service using Supabase vector store, OpenAI API, and SQLModel/Postgres",
     lifespan=lifespan
+)
+
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",   # Vite default
+    "http://localhost:5174",
+    # add production URL(s) here, e.g. "https://my-frontend.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,                 # exact list or ["*"] for all
+    allow_credentials=True,                # cookies / Authorization headers
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=[
+        "Origin",
+        "X-Requested-With",
+        "Content-Type",
+        "Accept",
+        "Authorization",
+        "X-HTTP-Method-Override",
+    ],
 )
 
 router_v1 = APIRouter(prefix="/v1")
@@ -122,7 +146,7 @@ async def query_stream(req: QueryRequest):
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid conversation_id format (must be UUID)")
 
-    history = await get_history(req.conversation_id)
+    history = await get_history(conversation_id)
 
     # 2) stream tokens from OpenAI
     async def event_generator():
@@ -130,11 +154,12 @@ async def query_stream(req: QueryRequest):
         async for token in stream_answer(req.question, history):
             full_answer += token
             yield token
-        await append_history(req.conversation_id, req.question, full_answer)
+        await append_history(conversation_id, req.question, full_answer)
 
     return StreamingResponse(
         event_generator(),
-        media_type="text/plain; charset=utf-8"
+        media_type="text/plain; charset=utf-8",
+        headers={"x-conversation-id": conversation_id}
     )
 
 @router_v1.get(

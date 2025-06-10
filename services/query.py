@@ -1,7 +1,7 @@
 
 from typing import List, Tuple, Dict, Any, AsyncGenerator
 from fastapi import HTTPException
-from openai import OpenAI
+from openai import AsyncOpenAI
 from sqlalchemy import text
 from services.db import get_session
 from langchain_openai import OpenAIEmbeddings
@@ -19,7 +19,7 @@ embedding_model = OpenAIEmbeddings(
     openai_api_key=settings.openai_api_key
 )
 
-client = OpenAI(api_key=settings.openai_api_key)
+client = AsyncOpenAI(api_key=settings.openai_api_key)
 
 def to_pgvector_literal(vec: list[float]) -> str:
     return f"[{','.join(f'{x:.6f}' for x in vec)}]"
@@ -83,9 +83,10 @@ async def stream_answer(
 
     full_answer = ""
     async for chunk in stream:
-        delta = chunk.choices[0].delta.get("content", "")
-        full_answer += delta
-        yield delta
+        content_delta = chunk.choices[0].delta.content  # may be None
+        if content_delta:
+            full_answer += content_delta
+            yield content_delta 
 
 async def answer_question(question: str) -> Tuple[str, List[Dict[str, Any]]]:
     logger.info("✅ Starting to embed query")
